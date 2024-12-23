@@ -18,20 +18,17 @@ malert_geopackage_data = get_malert_geopackage_data("2014-2024", "ESP", "4")
 malert_geopackage_data <- malert_geopackage_data %>%
   filter(malert_geopackage_data$movelab_annotation_euro.class_label == "aedes-albopictus" & malert_geopackage_data$movelab_annotation_euro.class_value >= 1)
 
-#Urban atlas location on Mac
-urban_atlas <- st_read("/home/otis/Downloads/123180/Results/ES002L2_BARCELONA_UA2018_v013/Data/ES002L2_BARCELONA_UA2018_v013.gpkg")
-
 #Urban atlas location on linux
-urban_atlas <- st_read("/home/otis/Downloads/ES002L2_BARCELONA_UA2018_v013/Data/ES002L2_BARCELONA_UA2018_v013.gpkg")
+urban_atlas <- st_read("~/Downloads/ES002L2_BARCELONA_UA2018_v013/Data/ES002L2_BARCELONA_UA2018_v013.gpkg")
 
 #used to check referencing system
 crs_check = st_crs(malert_geopackage_data) 
 
 #Transforms urban atlas to wg84
-#urban_atlas_wgs84 <- st_transform(urban_atlas, crs = 4326)
+urban_atlas <- st_transform(urban_atlas, crs = 4326)
 
 #Explanation: The st_transform() function changes the CRS of malert_geopackage_data to match that of urban_atlas. This is essential for accurate spatial operations.
-malert_geopackage_data <- st_transform(malert_geopackage_data, st_crs(urban_atlas))
+#malert_geopackage_data <- st_transform(malert_geopackage_data, st_crs(urban_atlas))
 
 #Joins urban atlas data with malert_geopackage_data
 malert_geopackage_data <- st_join(malert_geopackage_data, urban_atlas, join = st_intersects)
@@ -71,8 +68,7 @@ tm_shape(urban_atlas) +
   tm_layout(title = "Interactive Map: Mosquito Reports in Barcelona")
 
 
-library(leaflet)
-library(sf)
+ 
 
 # Transform the data to WGS84 (EPSG:4326) for compatibility with OSM
 urban_atlas_sf <- st_transform(urban_atlas, crs = 4326)
