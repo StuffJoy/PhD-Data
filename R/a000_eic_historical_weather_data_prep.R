@@ -9,7 +9,7 @@ library(RcppRoll)
 library(parallel)
 library(RSocrata)
 
-source("scripts/parameters.r")
+source("parameters.r")
 
 message_parallel <- function(...){
   system(sprintf('echo "\n%s\n"', paste0(..., collapse="")))
