@@ -6,7 +6,7 @@ rm(list=ls())
 ####Dependencies####
 library(tidyverse)
 library(sf)
-library(rgdal)
+#library(rgdal)
 library(tmap)
 library(ggplot2)
 library(lubridate)
@@ -38,7 +38,7 @@ urban_perimeter <- urban_atlas_transformed %>%
 # Step 4: Plot the resulting perimeter
 plot(urban_perimeter, col = "blue", main = "Urban Atlas Perimeter")
 
-write_rds(bcn_perimeter, "data/proc/a001_eic_bcn_perimeter.Rds")
+write_rds(urban_perimeter, "data/proc/a001_eic_bcn_perimeter.Rds")
 
 bcn_map_sp = as(urban_atlas_transformed, "Spatial")
 
@@ -46,7 +46,7 @@ bcn_map_sf <- st_as_sf(bcn_map_sp)
 
 bcn_map_sp_LonLat <- st_transform(bcn_map_sf, crs = LONLAT)
 
-bcn_map_sp_LonLat <- as(bcn_map_sp_LonLat, "Spatial")
+#bcn_map_sp_LonLat <- as(bcn_map_sp_LonLat, "Spatial")
 
 spain_gpdf = readRDS('spain_grid_small.Rds')
 

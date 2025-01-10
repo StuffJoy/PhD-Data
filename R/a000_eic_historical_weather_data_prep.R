@@ -9,7 +9,7 @@ library(RcppRoll)
 library(parallel)
 library(RSocrata)
 
-source("parameters.r")
+source("parameters.R")
 
 message_parallel <- function(...){
   system(sprintf('echo "\n%s\n"', paste0(..., collapse="")))
@@ -64,6 +64,57 @@ meteo_cat_weather_last4d <- bind_rows(mclapply(these_dates, function(this_date) 
 as_date(meteo_cat_weather_last4d$data_lectura[1], tz="CET")
 
 meteo_cat_weather_last4d_a = meteo_cat_weather_last4d%>% filter(!is.na(data_lectura)) %>% mutate(date = as_date(data_lectura, tz="CET"), codi_variable = as.numeric(codi_variable), valor_lectura = as.numeric(valor_lectura)) %>% dplyr::select(date, data_lectura, codi_variable, valor_lectura, codi_estacio)  %>% left_join(weather_variables) %>% rename(weather_type = acronim) %>% filter(weather_type %in% weather_acronims) %>% mutate(weather_type = case_when(weather_type=="PPT"~"PPT24H", weather_type =="Tx"~"TX", weather_type =="Tn"~"TN", weather_type =="T"~"TM", weather_type=="VV10"~"VVM10", weather_type=="VVx10"~"VVX10", weather_type=="HR"~"HRM", weather_type=="HRx"~"HRX", weather_type=="HRn"~"HRN", weather_type=="P"~"HPA")) %>% rename(valor = valor_lectura) %>% select(data_lectura, date, codi_estacio, weather_type, valor) %>% pivot_wider(id_cols = c(data_lectura, date, codi_estacio), names_from = weather_type, values_from = valor) %>% group_by(date, codi_estacio) %>% summarise(HRX = max(HRX, na.rm=TRUE), VVM10 = mean(VVM10, na.rm=TRUE), TM = mean(TM, na.rm=TRUE), HRM = mean(HRM, na.rm=TRUE), HPA = mean(HPA, na.rm=TRUE), PPT24H = mean(PPT24H, na.rm=TRUE), TX = max(TX, na.rm=TRUE), TN = min(TN, na.rm=TRUE), HRN = min(HRN, na.rm=TRUE), VVX10 = mean(VVX10, na.rm=TRUE)) %>% ungroup() %>% pivot_longer(cols = -c(date, codi_estacio), names_to = "weather_type", values_to = "valor")
+
+meteo_cat_weather_last4d_a = meteo_cat_weather_last4d %>% 
+  filter(!is.na(data_lectura)) %>%
+  mutate(
+    date = as_date(data_lectura, tz="CET"),
+    codi_variable = as.numeric(codi_variable),
+    valor_lectura = as.numeric(valor_lectura)
+  ) %>%
+  dplyr::select(date, data_lectura, codi_variable, valor_lectura, codi_estacio) %>%
+  left_join(weather_variables) %>%
+  rename(weather_type = acronim) %>%
+  filter(weather_type %in% weather_acronims) %>%
+  mutate(weather_type = case_when(
+    weather_type=="PPT"~"PPT24H",
+    weather_type =="Tx"~"TX",
+    weather_type =="Tn"~"TN",
+    weather_type =="T"~"TM",
+    weather_type=="VV10"~"VVM10",
+    weather_type=="VVx10"~"VVX10",
+    weather_type=="HR"~"HRM",
+    weather_type=="HRx"~"HRX",
+    weather_type=="HRn"~"HRN",
+    weather_type=="P"~"HPA"
+  )) %>%
+  rename(valor = valor_lectura) %>%
+  select(date, codi_estacio, weather_type, valor) %>%
+  # Using reframe instead of summarise
+  group_by(date, codi_estacio, weather_type) %>%
+  reframe(
+    valor = case_when(
+      weather_type == "HRX" ~ max(valor, na.rm = TRUE),
+      weather_type == "HRN" ~ min(valor, na.rm = TRUE),
+      weather_type == "TX" ~ max(valor, na.rm = TRUE),
+      weather_type == "TN" ~ min(valor, na.rm = TRUE),
+      TRUE ~ mean(valor, na.rm = TRUE)
+    )
+  ) %>%
+  pivot_wider(
+    id_cols = c(date, codi_estacio),
+    names_from = weather_type,
+    values_from = valor,
+    values_fn = list(valor = mean)
+  ) %>%
+  pivot_longer(
+    cols = -c(date, codi_estacio),
+    names_to = "weather_type",
+    values_to = "valor"
+  )
+
+
+
 
 #%>% filter(!is.na(date), !is.na(weather_type), !is.na(codi_estacio))
 
